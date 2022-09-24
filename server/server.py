@@ -5,4 +5,4 @@ assert 1025 <= SERVER_PORT <= 60000
 
 os.system('pip install json-server.py')
 os.system('pip install requests')
-os.system("json-server settings.json -b 7575")
+os.system("json-server settings.json -b %d" % (SERVER_PORT,))
