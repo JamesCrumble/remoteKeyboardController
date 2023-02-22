@@ -1,2 +1,1 @@
-# remoteClicker
-Actually old code from my "just any python code" folder. Some places in code have const but actually this is not const and better for this is implement stable connection instead of reconnection every time...
+# remoteKeyboardController
