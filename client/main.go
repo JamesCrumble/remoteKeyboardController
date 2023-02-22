@@ -3,15 +3,45 @@ package main
 import (
 	server "client/acceptingServer"
 	s "client/settings"
+	"errors"
 	"fmt"
 	"net"
+	"strings"
 	"time"
 )
 
+var settings s.SettingsStruct = *s.Settings()
+
+func defineLocalAddress() string {
+	if settings.ClientLocalIpAddress != "" {
+		return settings.ClientLocalIpAddress
+	}
+	if settings.InterfaceName == "" {
+		panic(errors.New("CANNOT DEFINE LOCAL ADDRESS. clientLocalIpAddress and interfaceName are empty"))
+	}
+
+	interfaces, err := net.Interfaces()
+	if err != nil {
+		panic(err)
+	}
+	for _, interface_ := range interfaces {
+		if interface_.Name == settings.InterfaceName {
+			addrs, err := interface_.Addrs()
+			if err != nil {
+				panic(err)
+			}
+			localIp := addrs[1].String()
+			return localIp[:strings.Index(localIp, "/")]
+		}
+	}
+	panic(fmt.Errorf("CANNOT DEFINE LOCAL ADDRESS BY \"%s\" interfaceName", settings.InterfaceName))
+
+}
+
 func registerClient() {
-	settings := s.Settings()
+	localIpAddress := defineLocalAddress()
 	address := fmt.Sprintf("%s:%d", settings.RegistrationServer.Ip, settings.RegistrationServer.Port)
-	writable := []byte(fmt.Sprintf("%s;%s:%d", "register", settings.ClientLocalIpAddress, settings.AcceptingServer.Port))
+	writable := []byte(fmt.Sprintf("%s;%s:%d", "register", localIpAddress, settings.AcceptingServer.Port))
 
 	fmt.Printf("TRYING TO REGISTER CLIENT ON \"%s\"\n", address)
 
@@ -32,8 +62,6 @@ func registerClient() {
 }
 
 func main() {
-	settings := s.Settings()
-
 	registerClient()
 
 	buffer := server.NewBuffer(32)

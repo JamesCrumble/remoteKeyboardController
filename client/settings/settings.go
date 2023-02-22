@@ -36,6 +36,7 @@ type SettingsStruct struct {
 	RegistrationServer   *RegistrationServer `yaml:"registrationServer"`
 	AcceptableButtons    *AcceptableButtons  `yaml:"acceptableButtons"`
 	ClientLocalIpAddress string              `yaml:"clientLocalIpAddress"`
+	InterfaceName        string              `yaml:"interfaceName"`
 }
 
 const fileName string = "client_settings"
