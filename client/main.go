@@ -2,6 +2,7 @@ package main
 
 import (
 	server "client/acceptingServer"
+	"client/helpers"
 	s "client/settings"
 	"errors"
 	"fmt"
@@ -24,14 +25,31 @@ func defineLocalAddress() string {
 	if err != nil {
 		panic(err)
 	}
+	fmt.Println("FOUNDED INTERFACES => ")
 	for _, interface_ := range interfaces {
+		interface_Addrs, err := interface_.Addrs()
+		if err != nil {
+			panic(err)
+		}
+
+		var interfaceData []string = helpers.ApplyAddrToString(interface_Addrs, func(addr net.Addr) string { return addr.String() })
+
+		fmt.Printf(
+			"INTERFACE \n\tNAME: \"%s\"\n\tADDRESS: \"%#v\"\n\n", interface_.Name, interfaceData,
+		)
 		if interface_.Name == settings.InterfaceName {
-			addrs, err := interface_.Addrs()
-			if err != nil {
-				panic(err)
+
+			var localIpAddress string
+			var ipAddress string = interfaceData[1]
+			var index = strings.Index(ipAddress, "/")
+
+			if index == -1 {
+				localIpAddress = ipAddress
+			} else {
+				localIpAddress = ipAddress[:index]
 			}
-			localIp := addrs[1].String()
-			return localIp[:strings.Index(localIp, "/")]
+			fmt.Printf("FOUND LOCAL IP ADDRESS TO CLIENT REGISTRATION => \"%s\"\n", localIpAddress)
+			return localIpAddress
 		}
 	}
 	panic(fmt.Errorf("CANNOT DEFINE LOCAL ADDRESS BY \"%s\" interfaceName", settings.InterfaceName))
