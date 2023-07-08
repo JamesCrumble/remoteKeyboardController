@@ -40,7 +40,9 @@ func Run(listener *net.Listener, buffer *Buffer) {
 			fmt.Println(err.Error())
 		} else {
 			fmt.Printf("COMMAND => \"%s\", PARAMS => %#v\n", command, params)
-			defineAndProcessCommand(&command, &params)
+			if err := defineAndProcessCommand(&command, &params); err != nil {
+				fmt.Println(err.Error())
+			}
 		}
 
 		buffer.ResetBuffer()

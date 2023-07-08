@@ -5,6 +5,7 @@ import (
 	settings "client/settings"
 	"errors"
 	"fmt"
+	"unicode/utf8"
 )
 
 /*
@@ -13,6 +14,7 @@ COMMANDS:
 */
 
 func pressCommand(char string) {
+	char = keyboardController.RuToEng(char)
 	if settings.Settings().AcceptableButtons.Contains(char) {
 		keyboardController.Press(char)
 	}
@@ -29,7 +31,7 @@ func defineAndProcessCommand(command *string, params *[]string) error {
 		if len(*params) != 1 {
 			return errors.New("\"press\" COMMAND EXPECTED 1 ARGUMENT ((string)char)")
 		}
-		if len((*params)[0]) != 1 {
+		if utf8.RuneCountInString((*params)[0]) != 1 {
 			return fmt.Errorf("\"press\" COMMAND EXPECT SINGLE CHAR STRING BUT GET => \"%s\"", (*params)[0])
 		}
 		pressCommand((*params)[0])
