@@ -41,7 +41,7 @@ var ruToEng = map[string]string{
 	"ю": ".",
 }
 
-func RuToEng(char string) string {
+func ToEng(char string) string {
 	engKey, ok := ruToEng[char]
 	if !ok {
 		return char

@@ -1,81 +1,71 @@
 package main
 
 import (
-	server "client/acceptingServer"
 	"client/helpers"
+	"client/server"
 	s "client/settings"
-	"errors"
 	"fmt"
 	"net"
-	"strings"
 	"time"
 )
 
+const REGISTRATION_TIMEOUT = time.Second * 5
+const REGISTRATION_RETRY_SLEEP = time.Second * 1
+
 var settings s.SettingsStruct = *s.Settings()
 
-func defineLocalAddress() string {
+func defineRegistrationIpAddress() string {
 	if settings.ClientLocalIpAddress != "" {
 		return settings.ClientLocalIpAddress
-	}
-	if settings.InterfaceName == "" {
-		panic(errors.New("CANNOT DEFINE LOCAL ADDRESS. clientLocalIpAddress and interfaceName are empty"))
 	}
 
 	interfaces, err := net.Interfaces()
 	if err != nil {
-		panic(err)
+		helpers.DelayedPanic(err)
 	}
-	fmt.Println("FOUNDED INTERFACES => ")
-	for _, interface_ := range interfaces {
-		interface_Addrs, err := interface_.Addrs()
+
+	for _, netInterface := range interfaces {
+		if netInterface.Name != settings.InterfaceName {
+			continue
+		}
+
+		interfaceAddrs, err := netInterface.Addrs()
 		if err != nil {
-			panic(err)
+			helpers.DelayedPanic(err)
 		}
-
-		var interfaceData []string = helpers.ApplyAddrToString(interface_Addrs, func(addr net.Addr) string { return addr.String() })
-
-		fmt.Printf(
-			"INTERFACE \n\tNAME: \"%s\"\n\tADDRESS: \"%#v\"\n\n", interface_.Name, interfaceData,
-		)
-		if interface_.Name == settings.InterfaceName {
-
-			var localIpAddress string
-			var ipAddress string = interfaceData[1]
-			var index = strings.Index(ipAddress, "/")
-
-			if index == -1 {
-				localIpAddress = ipAddress
-			} else {
-				localIpAddress = ipAddress[:index]
-			}
-			fmt.Printf("FOUND LOCAL IP ADDRESS TO CLIENT REGISTRATION => \"%s\"\n", localIpAddress)
-			return localIpAddress
-		}
+		netInterfaceData := helpers.Apply(&interfaceAddrs, func(addr net.Addr) string { return addr.String() })
+		ipAddress := helpers.IpAddressFromNetInterfaceData(&netInterfaceData)
+		fmt.Printf("Found \"%s\" ip address for \"%s\" net interface name \n", ipAddress, settings.InterfaceName)
+		return ipAddress
 	}
-	panic(fmt.Errorf("CANNOT DEFINE LOCAL ADDRESS BY \"%s\" interfaceName", settings.InterfaceName))
 
+	helpers.DelayedPanic(fmt.Sprintf("Cannot define address by \"%s\" net interface name\n", settings.InterfaceName))
+	return ""
 }
 
 func registerClient() {
-	localIpAddress := defineLocalAddress()
-	address := fmt.Sprintf("%s:%d", settings.RegistrationServer.Ip, settings.RegistrationServer.Port)
-	writable := []byte(fmt.Sprintf("%s;%s:%d", "register", localIpAddress, settings.AcceptingServer.Port))
+	registrationIpAddress := defineRegistrationIpAddress()
+	registrationServerAddress := fmt.Sprintf("%s:%d", settings.RegistrationServer.Ip, settings.RegistrationServer.Port)
+	registrationCommandMessage := []byte(fmt.Sprintf("%s;%s:%d", "register", registrationIpAddress, settings.Server.Port))
 
-	fmt.Printf("TRYING TO REGISTER CLIENT ON \"%s\"\n", address)
+	fmt.Printf("Trying to inf register client on \"%s\" ip address\n", registrationServerAddress)
 
+	dialer := net.Dialer{Timeout: REGISTRATION_TIMEOUT}
 	for {
-		conn, err := net.Dial("tcp4", address)
+		conn, err := dialer.Dial("tcp4", registrationServerAddress)
 		if err != nil {
-			fmt.Println(err.Error())
-			time.Sleep(time.Second * 1)
+			fmt.Printf("Cannot connect to registration server. New try after %d seconds\n", REGISTRATION_RETRY_SLEEP/1000000000)
+			time.Sleep(REGISTRATION_RETRY_SLEEP)
 			continue
 		}
-		if _, err := conn.Write(writable); err != nil {
-			fmt.Printf("CANNOT SEND REGISTRATION COMMAND WITH ERROR => %s", err.Error())
-		} else {
-			conn.Close()
-			break
+		if _, err := conn.Write(registrationCommandMessage); err != nil {
+			fmt.Printf("Cannot write to the socket => %#v. New try after %d seconds\n", err, REGISTRATION_RETRY_SLEEP/1000000000)
+			time.Sleep(REGISTRATION_RETRY_SLEEP)
+			continue
 		}
+
+		conn.Close()
+		break
 	}
 }
 
@@ -83,7 +73,8 @@ func main() {
 	registerClient()
 
 	buffer := server.NewBuffer(32)
-	serverListener := server.CreateListener(settings.AcceptingServer.Host, uint16(settings.AcceptingServer.Port))
-	fmt.Printf("SOCKET LISTENING ON %s:%d\n", settings.AcceptingServer.Host, settings.AcceptingServer.Port)
-	server.Run(&serverListener, &buffer)
+	serverListener := server.CreateListener(settings.Server.Host, uint16(settings.Server.Port))
+
+	fmt.Printf("Listen socket on %s:%d\n", settings.Server.Host, settings.Server.Port)
+	server.InfiniteListening(&serverListener, &buffer)
 }

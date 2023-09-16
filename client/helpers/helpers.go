@@ -1,26 +1,45 @@
 package helpers
 
 import (
-	"net"
+	"fmt"
+	"strings"
+	"time"
 )
 
-func Apply(iterable []any, key func(any) any) []any {
+const PANIC_DELAY = time.Second * 5
 
-	var applyedArray []any = make([]any, 8)
+func Apply[T comparable](iterable *[]T, key func(T) string) []string {
+	var arr []string
 
-	for _, element := range iterable {
-		applyedArray = append(applyedArray, key(element))
+	for _, element := range *iterable {
+		arr = append(arr, key(element))
 	}
 
-	return applyedArray
+	return arr
 }
 
-func ApplyAddrToString(iterable []net.Addr, key func(net.Addr) string) []string {
-	var applyedArray []string
-
-	for _, element := range iterable {
-		applyedArray = append(applyedArray, key(element))
+func Contains[T comparable](arr *[]T, value T) bool {
+	for _, element := range *arr {
+		if element != value {
+			continue
+		}
+		return true
 	}
+	return false
+}
 
-	return applyedArray
+func IpAddressFromNetInterfaceData(netInterfaceData *[]string) string {
+	var ipAddress string = (*netInterfaceData)[1]
+	var index = strings.Index(ipAddress, "/")
+
+	if index == -1 {
+		return ipAddress
+	}
+	return ipAddress[:index]
+}
+
+func DelayedPanic(err any) {
+	fmt.Println(err)
+	time.Sleep(PANIC_DELAY)
+	panic(err)
 }

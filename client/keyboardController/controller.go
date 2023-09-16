@@ -1,7 +1,6 @@
 package keyboardController
 
 import (
-	"fmt"
 	"syscall"
 	"time"
 )
@@ -24,6 +23,7 @@ func downKey(key int) {
 	vkey := key + 0x80
 	procKeyBd.Call(uintptr(key), uintptr(vkey), uintptr(flag), 0)
 }
+
 func upKey(key int) {
 	flag := _KEYEVENTF_KEYUP
 	if key < 0xFFF {
@@ -34,12 +34,8 @@ func upKey(key int) {
 	vkey := key + 0x80
 	procKeyBd.Call(uintptr(key), uintptr(vkey), uintptr(flag), 0)
 }
-func Press(char string) {
-	keycode, err := CharToKeycode(char)
-	if err != nil {
-		fmt.Println(err.Error())
-		return
-	}
+
+func Press(keycode uint16) {
 	downKey(int(keycode))
 	time.Sleep(time.Millisecond * 100)
 	upKey(int(keycode))

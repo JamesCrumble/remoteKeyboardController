@@ -1,16 +1,16 @@
 package settings
 
 import (
-	"client/helpers"
 	"fmt"
 	"gopkg.in/yaml.v3"
+	"listener/helpers"
 	"os"
 	"path/filepath"
 )
 
-const SETTINGS_FILENAME string = "client_settings"
+const SETTINGS_FILENAME string = "server_settings"
 
-var clientSettings SettingsStruct
+var serverSettings SettingsStruct
 
 func settingsFilePath() string {
 	workingDir, err := os.Getwd()
@@ -27,16 +27,14 @@ func initSettings() {
 		helpers.DelayedPanic(err)
 	}
 
-	if err := yaml.Unmarshal(settingsContent, &clientSettings); err != nil {
+	if err := yaml.Unmarshal(settingsContent, &serverSettings); err != nil {
 		helpers.DelayedPanic(err)
 	}
-
 }
 
 func Settings() *SettingsStruct {
-	if (clientSettings == SettingsStruct{}) {
+	if (serverSettings == SettingsStruct{}) {
 		initSettings()
-		clientSettings.Validate()
 	}
-	return &clientSettings
+	return &serverSettings
 }

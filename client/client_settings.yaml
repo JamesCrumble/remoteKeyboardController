@@ -1,15 +1,15 @@
-acceptingServer:
-  host: "0.0.0.0"
+server:
+  host: '0.0.0.0'
   port: 4444
 
 registrationServer:
-  ip: "192.168.0.25"
+  ip: '192.168.0.25'
   port: 4040
 
 # if defined then program use it
-clientLocalIpAddress: "" 
-# if defined and "clientLocalIpAddress" not defined then program trying to find this iterface and take address from it info
-interfaceName: "Ethernet" 
+clientLocalIpAddress: ''
+# if defined and "clientLocalIpAddress" not defined then program trying to find address of this net interface
+interfaceName: 'Ethernet'
 
-acceptableButtons: 
-  buttons: ["t"]
+acceptableButtons:
+  buttons: ['t']

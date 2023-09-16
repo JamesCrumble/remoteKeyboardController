@@ -1,4 +1,4 @@
-package acceptingServer
+package server
 
 type Buffer struct {
 	arr []byte
@@ -10,6 +10,6 @@ func (buffer *Buffer) ResetBuffer() {
 	}
 }
 
-func NewBuffer(buf_size int) Buffer {
-	return Buffer{arr: make([]byte, buf_size)}
+func NewBuffer(size int) Buffer {
+	return Buffer{arr: make([]byte, size)}
 }
