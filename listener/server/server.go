@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"listener/commands"
+	"listener/settings"
 	"net"
 	"strings"
 )
@@ -18,7 +19,7 @@ func parseRequest(requestBuffer *[]byte) (string, []string, error) {
 	requestData := string(bytes.Trim(*requestBuffer, "\x00"))
 	commandIndex := strings.Index(requestData, ";")
 	if commandIndex == -1 {
-		return "", make([]string, 0), errors.New("CANNOT PARSE REQUEST DATA")
+		return "", []string{}, errors.New("CANNOT PARSE REQUEST DATA")
 	}
 
 	return requestData[:commandIndex], strings.Split(requestData[commandIndex+1:], ":"), nil
@@ -29,7 +30,7 @@ func reactToRequest(requestBuffer *[]byte) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("get \"%s\" command name with %#v parameters\n", commandName, params)
+	fmt.Printf("get \"%s\" command name with %v parameters\n", commandName, params)
 
 	command, err := commands.GetCommand(commandName)
 	if err != nil {
@@ -40,12 +41,19 @@ func reactToRequest(requestBuffer *[]byte) error {
 	return nil
 }
 
-func InfiniteListening(listener *net.Listener, buffer *Buffer) {
+func InfiniteListening() {
+	buffer := NewBuffer(128)
+	settings := *settings.Settings()
+
+	listener, err := net.Listen("tcp4", fmt.Sprintf("%s:%d", settings.Server.Host, settings.Server.Port))
+	if err != nil {
+		panic(err)
+	}
+
 	for {
-		conn, err := (*listener).Accept()
+		conn, err := listener.Accept()
 		if err != nil {
 			fmt.Println(err)
-			return
 		}
 		if _, err := conn.Read(buffer.arr); err != nil {
 			panic(err)
@@ -54,15 +62,7 @@ func InfiniteListening(listener *net.Listener, buffer *Buffer) {
 			fmt.Println(err)
 		}
 
-		buffer.ResetBuffer()
+		buffer.Reset()
 		conn.Close()
 	}
-}
-
-func CreateListener(host string, port uint16) net.Listener {
-	serverListener, err := net.Listen("tcp4", fmt.Sprintf("%s:%d", host, port))
-	if err != nil {
-		panic(err)
-	}
-	return serverListener
 }

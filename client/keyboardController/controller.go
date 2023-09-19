@@ -37,6 +37,6 @@ func upKey(key int) {
 
 func Press(keycode uint16) {
 	downKey(int(keycode))
-	time.Sleep(time.Millisecond * 100)
+	time.Sleep(time.Millisecond * 10)
 	upKey(int(keycode))
 }

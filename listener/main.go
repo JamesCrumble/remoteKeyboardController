@@ -16,9 +16,7 @@ var settings s.SettingsStruct = *s.Settings()
 var actionsNetDialer = net.Dialer{Timeout: ACTION_TIMEOUT}
 
 func sendPressAction(client *globals.Client, char rune) {
-	ip, port := (*client).Ip, (*client).Port
-
-	conn, err := actionsNetDialer.Dial("tcp4", fmt.Sprintf("%s:%d", ip, port))
+	conn, err := actionsNetDialer.Dial("tcp4", fmt.Sprintf("%s:%d", client.Ip, client.Port))
 	if err != nil {
 		fmt.Println(err)
 		globals.DeleteClient(client)
@@ -44,11 +42,8 @@ func sendPressActions(char rune) {
 }
 
 func main() {
-	buffer := server.NewBuffer(128)
-	serverListener := server.CreateListener(settings.Server.Host, uint16(settings.Server.Port))
 	fmt.Printf("Listeting socket on %s:%d\n", settings.Server.Host, settings.Server.Port)
-
-	go server.InfiniteListening(&serverListener, &buffer)
+	go server.InfiniteListening()
 
 	eventsChannel := hook.Start()
 	defer hook.End()

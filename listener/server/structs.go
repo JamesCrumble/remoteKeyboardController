@@ -4,8 +4,8 @@ type Buffer struct {
 	arr []byte
 }
 
-func (buffer *Buffer) ResetBuffer() {
-	for i := 0; i < len(buffer.arr); i++ {
+func (buffer *Buffer) Reset() {
+	for i := 0; i < cap(buffer.arr); i++ {
 		buffer.arr[i] = 0
 	}
 }

@@ -54,12 +54,12 @@ func registerClient() {
 	for {
 		conn, err := dialer.Dial("tcp4", registrationServerAddress)
 		if err != nil {
-			fmt.Printf("Cannot connect to registration server. New try after %d seconds\n", REGISTRATION_RETRY_SLEEP/1000000000)
+			fmt.Printf("Cannot connect to registration server. New try after %d seconds\n", int(REGISTRATION_RETRY_SLEEP.Seconds()))
 			time.Sleep(REGISTRATION_RETRY_SLEEP)
 			continue
 		}
 		if _, err := conn.Write(registrationCommandMessage); err != nil {
-			fmt.Printf("Cannot write to the socket => %#v. New try after %d seconds\n", err, REGISTRATION_RETRY_SLEEP/1000000000)
+			fmt.Printf("Cannot write to the socket => %v. New try after %d seconds\n", err, int(REGISTRATION_RETRY_SLEEP.Seconds()))
 			time.Sleep(REGISTRATION_RETRY_SLEEP)
 			continue
 		}
@@ -71,10 +71,6 @@ func registerClient() {
 
 func main() {
 	registerClient()
-
-	buffer := server.NewBuffer(32)
-	serverListener := server.CreateListener(settings.Server.Host, uint16(settings.Server.Port))
-
 	fmt.Printf("Listen socket on %s:%d\n", settings.Server.Host, settings.Server.Port)
-	server.InfiniteListening(&serverListener, &buffer)
+	server.InfiniteListening()
 }

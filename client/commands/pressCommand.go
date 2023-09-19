@@ -36,5 +36,6 @@ func pressCommand(params []string) {
 	if !helpers.Contains(&settings.Settings().AcceptableButtons.Buttons, char) {
 		return
 	}
+
 	keyboardController.Press(keycode)
 }
